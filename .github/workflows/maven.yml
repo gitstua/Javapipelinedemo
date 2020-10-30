@@ -41,7 +41,7 @@ jobs:
     - name: Push Container to ACR
       working-directory: src
       run: |
-        docker build . -t ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
+        docker build ./Application/ -t ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
         docker push ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
         
   DeployWebApp:
