@@ -37,7 +37,8 @@ jobs:
         password: ${{ secrets.ACR_PASSWORD }}
         # Container registry server url
         login-server: ${{env.CONTAINER_REGISTRY}}
-
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: Push Container to ACR
       working-directory: src
       run: |
