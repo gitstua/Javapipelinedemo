@@ -1,0 +1,101 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# Thanks to https://gist.github.com/ahmedig/f37c083d0977de0da96b3e5c0bd7f330
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CONTAINER_REGISTRY: javajsf1acr.azurecr.io
+  image_name: java-jsf1-image
+  AZURE_WEBAPP_NAME: java-jsf1
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Build with Maven
+      run: mvn -B package --file Application/pom.xml
+
+    - name: Azure Container Registry Login
+      uses: Azure/docker-login@v1
+      with:
+        # Container registry username
+        username: ${{ secrets.ACR_USERNAME }}
+        # Container registry password
+        password: ${{ secrets.ACR_PASSWORD }}
+        # Container registry server url
+        login-server: ${{env.CONTAINER_REGISTRY}}
+
+    - name: Push Container to ACR
+      working-directory: src
+      run: |
+        docker build . -t ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
+        docker push ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
+        
+  DeployWebApp:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Azure authentication
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Azure CLI script to provision a new Web App for Container
+  #       uses: azure/CLI@v0-beta
+  #       with:
+  #         azcliversion: latest
+  #         inlineScript: |
+  #           az webapp create --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --plan ${{ env.AZURE_APP_PLAN }} --name ${{ env.AZURE_WEBAPP_NAME }}  -i nginx
+      - name: Azure Container Registry Login
+        uses: Azure/docker-login@v1
+        with:
+          # Container registry username
+          username: ${{ secrets.ACR_USERNAME }}
+          # Container registry password
+          password: ${{ secrets.ACR_PASSWORD }}
+          # Container registry server url
+          login-server: ${{env.CONTAINER_REGISTRY}}
+      
+      - name: Set Web App ACR authentication
+        uses: Azure/appservice-settings@v1
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-settings-json: |
+            [
+                {
+                    "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+                    "value": "${{ secrets.ACR_PASSWORD }}",
+                    "slotSetting": false
+                },
+                {
+                    "name": "DOCKER_REGISTRY_SERVER_URL",
+                    "value": "https://${{env.CONTAINER_REGISTRY}}",
+                    "slotSetting": false
+                },
+                {
+                    "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+                    "value": "${{ secrets.ACR_USERNAME  }}",
+                    "slotSetting": false
+                }
+            ]
+          
+      - name: 'Deploy to Azure Web App for Container'
+        uses: azure/webapps-deploy@v2
+        with: 
+          app-name: ${{ env.AZURE_WEBAPP_NAME }} 
+          images: ${{ env.CONTAINER_REGISTRY }}/${{env.image_name}}:${{ github.sha }}
