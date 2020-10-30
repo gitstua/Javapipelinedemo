@@ -37,17 +37,19 @@ jobs:
         password: ${{ secrets.ACR_PASSWORD }}
         # Container registry server url
         login-server: ${{env.CONTAINER_REGISTRY}}
+    - name: Create Container
+      working-directory: src
+      run: |
+        cd Application
+        docker build . -t ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
+        echo ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
     - name: Push Container to ACR
       working-directory: src
       run: |
-        ls
         cd Application
-        ls
-        docker build . -t ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
-        docker push ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
-        
+        docker push ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}        
   DeployWebApp:
     needs: build
     runs-on: ubuntu-latest
