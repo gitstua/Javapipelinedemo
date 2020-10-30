@@ -43,8 +43,7 @@ jobs:
       run: |
         docker build . -t ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
         echo ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
+    
     - name: Push Container to ACR
       working-directory: Application
       run: |
