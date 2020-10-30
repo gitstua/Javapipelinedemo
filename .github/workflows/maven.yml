@@ -13,7 +13,7 @@ on:
 env:
   CONTAINER_REGISTRY: javajsf1acr.azurecr.io
   image_name: java-jsf1-image
-  AZURE_WEBAPP_NAME: java-jsf1
+  AZURE_WEBAPP_NAME: java-jsf2
   
 jobs:
   build:
