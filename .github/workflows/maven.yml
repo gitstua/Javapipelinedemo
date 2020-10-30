@@ -26,7 +26,7 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Maven
-      working-directory: src/Application
+      working-directory: Application
       run: mvn -B package --file ./pom.xml
 
     - name: Azure Container Registry Login
@@ -39,14 +39,14 @@ jobs:
         # Container registry server url
         login-server: ${{env.CONTAINER_REGISTRY}}
     - name: Create Container
-      working-directory: src/Application
+      working-directory: Application
       run: |
         docker build . -t ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
         echo ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
     - name: Push Container to ACR
-      working-directory: src/Application
+      working-directory: Application
       run: |
         docker push ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ github.sha }}        
   DeployWebApp:
