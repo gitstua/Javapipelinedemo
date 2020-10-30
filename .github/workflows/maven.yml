@@ -26,7 +26,7 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Maven
-      working-directory: ./src/Applciation
+      working-directory: ./src/Application
       run: mvn -B package --file ./pom.xml
 
     - name: Azure Container Registry Login
